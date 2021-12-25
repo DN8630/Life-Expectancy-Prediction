@@ -1,0 +1,570 @@
+---
+title: "Life Expectancy"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 20px; padding: 20px;}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+<div class = "blue">
+
+
+## Synopsis 
+**What is the importance of knowing Life Expectancy?**
+</br>
+</br>
+Life expectancy, or the average number of years a person is expected to live, can be used as an overall indicator of community health. Low life expectancies can result from high infant mortality rates, high rates of drug overdose or suicide, barriers to high quality healthcare, and other factors. There are many uses for it in the financial world, including life insurance, pension planning, and U.S. Social Security benefits.
+
+### About our Dataset
+The dataset related to life expectancy, health factors for 193 countries has been collected from WHO data repository website and its corresponding economic data was collected from United Nation website. Among all categories of health-related factors only those critical factors were chosen which are more representative.  
+</br>
+In this project we have considered data from year 2000-2015 for 193 countries for further analysis. The individual data files have been merged together into a single dataset. On initial visual inspection of the data showed some missing values. As the datasets were from WHO, we found no evident errors. Missing data was handled in R software by using Missmap command. The result indicated that most of the missing data was for population, Hepatitis B and GDP. 
+</br>
+</br>
+The goal of this project is to build a Linear Regression Model to predict the likelihood of Life Expectancy in different countries of the world.
+</br>
+</br>
+The link to original dataset can be found [here](https://www.kaggle.com/kumarajarshi/life-expectancy-who).
+</br>
+</br>
+<center>![image](https://www.worldatlas.com/upload/b3/c2/b2/shutterstock-1350757706.jpg)</center>
+
+### Packages required
+```{r loading necessary packages and reading the csv file, include=FALSE}
+#packages required
+#options(repos = list(CRAN="http://cran.rstudio.com/"))
+#library(tidyverse)
+#library(plotly)
+#install.packages("readxl")
+#install.packages("cowplot")
+#install.packages("Hmisc")
+#install.packages("WVPlots")
+#install.packages("e1071")
+#install.packages("caret")
+#install.packages("ggdraw")
+#install.packages('plyr', repos = "http://cran.us.r-project.org")
+#install.packages("GGally")
+#install.packages("ggcorrplot")
+#install.packages("psych")
+library(ggplot2)
+library(GGally)
+library(ggcorrplot)
+library(plotly)
+library(tidyverse)
+library(cowplot)
+library(psych)
+library(lattice)
+library(selectr)
+library(xtable)
+library(plyr); library(dplyr)
+library(gridExtra)
+library(WVPlots)
+library(readxl)
+```
+
+* library(ggplot2)
+* library(GGally)
+* library(ggcorrplot)
+* library(plotly)
+* library(tidyverse)
+* library(cowplot)
+* library(psych)
+* library(lattice)
+* library(xtable)
+* library(plyr); library(dplyr)
+* library(gridExtra)
+* library(WVPlots)
+
+The above packages were installed and used in this project.
+
+## Data Dictionary
+There are 22 columns in our dataset. These columns's label are listed below.
+
+*Country* - Country </br>
+*Year* - data is collected from 2000 - 2015 years </br>
+*Status* - Developed or Developing status </br>
+*Life expectancy* - Life Expectancy in age</br>
+*Adult Mortality* - Adult Mortality Rates of both sexes (probability of dying between 15 and 60 years per 1000 population)</br>
+*infant deaths* - Number of Infant Deaths per 1000 population</br>
+*Alcohol* - Alcohol, recorded per capita (15+) consumption (in litres of pure alcohol)</br>
+*percentage expenditure* - Expenditure on health as a percentage of Gross Domestic Product per capita(%)</br>
+*Hepatitis B* - Hepatitis B (HepB) immunization coverage among 1-year-olds (%)</br>
+*Measles* - number of reported cases per 1000 population</br>
+*BMI* - Average Body Mass Index of entire population</br>
+*under-five deaths* - Number of under-five deaths per 1000 population</br>
+*Polio* - (Pol3) immunization coverage among 1-year-olds (%)</br>
+*Total expenditure* - General government expenditure on health as a percentage of total government expenditure (%)</br>
+*Diphtheria* - Diphtheria tetanus toxoid and pertussis (DTP3) immunization coverage among 1-year-olds (%)</br>
+*HIV/AIDS* - Deaths per 1 000 live births HIV/AIDS (0-4 years)</br>
+*GDP* - Gross Domestic Product per capita (in USD)</br>
+*Population* - Population of the country</br>
+*thinness 1-19 years* - Prevalence of thinness among children and adolescents for Age 10 to 19 (% )</br>
+*thinness 5-9 years* - Prevalence of thinness among children for Age 5 to 9(%)</br>
+*Income composition of resources* - Human Development Index in terms of income composition of resources (index ranging from 0 to 1)</br>
+*Schooling* - Number of years of Schooling(years)</br>
+
+
+## Data Preparation 
+
+```{r reading the csv file, echo=TRUE}
+#Reading csv file
+life_expectancy_data <- read.csv("C://Users/raghu/Desktop/Daya Courses/Projects/Life-Expectancy-Prediction/Life Expectancy Data.csv")
+head(life_expectancy_data, 5)
+```
+
+The dataset contains 2938 rows and 22 columns
+```{r checking the dimensions of the datafile, echo=TRUE}
+#Dimensions : Gives numbers of rows and columns
+dim(life_expectancy_data)
+```
+
+We can understand more about the structure of the dataset by using the str() function.
+```{r structure of the data, echo=TRUE}
+# Structure of dataset
+str(life_expectancy_data)
+```
+
+There are 13 variables that are taken as indicators from this dataset.
+```{r find statistical summary of the variables, echo=TRUE}
+#statistical summary of the variables
+summary(life_expectancy_data)
+```
+
+## Data Cleaning
+
+```{r echo=TRUE}
+#Check for missing values
+colSums(is.na(life_expectancy_data))
+```
+
+We will now impute the missing values with the mean to avoid errors in our analysis.
+```{r imputing missing values, echo=TRUE}
+# Select numeric variables for calculating mean
+life_expectancy_data_num <- select(life_expectancy_data,-c(1,2,3))
+
+#Calculate means of all the numeric variables
+colMeans(life_expectancy_data_num, na.rm = TRUE)
+
+
+# Impute missing values in numeric variables with mean
+for(i in 4:ncol(life_expectancy_data)) {
+  life_expectancy_data[ , i][is.na(life_expectancy_data[ , i])] <- mean(life_expectancy_data[ , i], na.rm=TRUE)
+}
+summary(life_expectancy_data) 
+```
+
+```{r echo=TRUE}
+# We can see that now the data set has no missing values
+colSums(is.na(life_expectancy_data))
+dim(life_expectancy_data)
+```
+
+### Outlier analysis
+While predicting life expectancy there could be few outliers that we need to ignore. Detection of outliers is important as, it increases the error variance and reduces the power of statistical tests. They can cause bias and/or influence estimates. They can also impact the basic assumption of regression as well as other statistical models.
+
+```{r cars2}
+#Plotting box plots of life expectancy to understand outliers
+boxplot(life_expectancy_data$Life.expectancy, xlab="Life Expectancy")
+```
+
+From the box plot we can see that age below 45 is Outlier. Our analysis is not applicable for these records.
+
+### Removing outliers
+```{r reoving outliers}
+outliers <- boxplot(life_expectancy_data$Life.expectancy, plot=FALSE)$out
+
+life_expectancy_data<- life_expectancy_data[-which(life_expectancy_data$Life.expectancy %in% outliers),]
+
+dim(life_expectancy_data)
+```
+
+## Graphical analysis
+Now we will perform correlation analysis to identify how each factor is related to the life expectancy of a person.
+
+Typically, for each of the independent variables (predictors), the following plots are drawn to visualize the following behavior:<br></br>
+1. *Scatter plot*: Visualize the linear relationship between the predictor and response.<br></br>
+2. *Box plot*: To spot any outlier observations in the variable. Having outliers in your predictor can drastically affect the predictions as they can easily affect the direction/slope of the line of best fit.<br></br>
+3. *Density plot*: To see the distribution of the predictor variable. Ideally, a close to normal distribution (a bell shaped curve), without being skewed to the left or right is preferred.<br></br> 
+<br></br>
+We will be using mostly scatter plots to identify any relationship between variables as they are easy to detect visually detect any correlation.
+<br></br>
+
+<H5><b> 1. correlation between Health expenditure and life expectancy. </b></H5>
+
+```{r finding correlation between expenditure and life epectancy, echo=TRUE}
+#correlation between percentage expenditure and life expectancy
+life_expectancy_vs_percenntage_expenditure <-  ggplot(life_expectancy_data, aes(percentage.expenditure, Life.expectancy)) + 
+                                      geom_jitter(color = "yellow", alpha = 0.5) + theme_light()
+
+life_expectancy_vs_Total_expenditure  <- ggplot(life_expectancy_data, aes(Total.expenditure, Life.expectancy)) +
+                                      geom_jitter(color = "Light green", alpha = 0.5) + theme_light()
+
+p <- plot_grid(life_expectancy_vs_percenntage_expenditure, life_expectancy_vs_Total_expenditure) 
+title <- ggdraw() + draw_label("Correlation between Health expenditure and life expectancy", fontface='bold')
+plot_grid(title, p, ncol=1, rel_heights=c(0.1, 1))
+```
+
+We can see from the above graph that the concentration of life expectancy is more when expenditure varies from 5k - 20k. Similar Analysis could be done for other variables. Lets find out if there is any effect of immunization coverage on life expectancy.
+</br></br>
+
+<H5><b>2. Life expectancy vs Immunizations</b></H5>
+
+```{r life-exp and immunization, echo=TRUE}
+
+library(plotly)
+life_expectancy_vs_Hepatitis_B <- ggplot(life_expectancy_data, aes(Hepatitis.B, Life.expectancy)) + 
+                                      geom_jitter(color = "purple", alpha = 0.5) + theme_light()
+
+life_expectancy_vs_Diphtheria  <- ggplot(life_expectancy_data, aes(Diphtheria, Life.expectancy)) +
+                                       geom_jitter(color = "orange", alpha = 0.5) + theme_light()
+                              
+life_expectancy_vs_Polio  <- ggplot(life_expectancy_data, aes(Polio, Life.expectancy)) + geom_jitter(color = "pink", alpha = 0.5) + theme_grey()
+
+p <- plot_grid(life_expectancy_vs_Hepatitis_B, life_expectancy_vs_Diphtheria, life_expectancy_vs_Polio ) 
+title <- ggdraw() + draw_label("Correlation between Immunizations and life expectancy", fontface='bold')
+plot_grid(title, p, ncol=1, rel_heights=c(0.1, 1))
+```
+</br>
+Data points for Immunizations ( Hepatitis.B and Diphtheria) are concentrated in the age range from 60 - 80 years old, this means getting imunized is definitely positive for better life expectancy.
+</br>
+
+<H5><b> 3. Life expectancy vs Measles </b></H5>
+**Measles** represents the number of reported cases per 1000 population
+
+```{r life-exp and measles cases reported, echo=TRUE}
+#correlation between measles and life expectancy
+life_expectancy_vs_Measles  <- plot_ly(data = life_expectancy_data, x = ~Measles , y = ~Life.expectancy,
+                                      marker = list(size = 10,
+                                                    color =  'rgba(221,160,221, .3)',
+                                                     line = list(color = 'rgba(255, 0, 38, 0.2)',
+                                                                 width = 2)))
+life_expectancy_vs_Measles  <- life_expectancy_vs_Measles  %>% layout(title = 'Scatter Plot: Life Expectancy vs Measles',
+                                                                    yaxis = list(zeroline = FALSE),
+                                                                    xaxis = list(zeroline = FALSE))
+
+life_expectancy_vs_Measles 
+```
+We can see that the concentration of reported cases of Measles is between 0 - 50k and is varied across all the age groups. We can also see some values in the 50k - 250k range that may have influenced the Life expectancy.
+</br>
+
+<H5><b> 4. Life expectancy vs Alcohol</b></H5>
+**Alcohol ** represents Gross Domestic Product per capita (in USD)
+
+```{r life-exp vs alcohol, echo=TRUE}
+#correlation between alcohol and life expectancy
+life_expectancy_vs_Alcohol  <- plot_ly(data = life_expectancy_data, x = ~Alcohol , y = ~Life.expectancy,
+                                      marker = list(size = 10,
+                                                 color = 'rgba(152, 215, 182, .5)',
+                                                 line = list(color = 'rgba(0, 0, 0, 0)',
+                                                             width = 2)))
+life_expectancy_vs_Alcohol  <- life_expectancy_vs_Alcohol  %>% layout(title = 'Scatter Plot: Life Expectancy vs Alcohol ',
+                                                                    yaxis = list(zeroline = FALSE),
+                                                                    xaxis = list(zeroline = FALSE))
+
+life_expectancy_vs_Alcohol 
+```
+</br>
+
+<H5><b> 5. Life expectancy vs BMI</b></H5>
+
+```{r life-exp vs BMI, echo=TRUE}
+#correlation between BMI and life expectancy
+life_expectancy_vs_BMI <- plot_ly(data = life_expectancy_data, x = ~BMI, y = ~Life.expectancy,
+                                      marker = list(size = 10,
+                                                   color = 'rgba(255,182,193, .9)',
+                                            line = list(color = 'rgba(255, 0, 38, 0.2)',
+                                                        width = 2)))
+life_expectancy_vs_BMI <- life_expectancy_vs_BMI %>% layout(title = 'Scatter Plot: Life Expectancy vs BMI',
+                                                                    yaxis = list(zeroline = FALSE),
+                                                                    xaxis = list(zeroline = FALSE))
+
+life_expectancy_vs_BMI
+```
+
+We can see that life expectancy of the population decrease as the BMI increase. 
+</br>
+
+<H5><b> 6. Life expectancy vs under five deaths </b></H5>
+We want to analyse if lesser deaths are positively related to life expectancy.<br>
+**Under five deaths** represents the number of under-five deaths per 1000 population
+
+```{r correlation plot between under five deaths and life expectancy, echo=TRUE}
+library(plotly)
+life_expectancy_vs_under_five_deaths  <- ggplot(life_expectancy_data, aes(under.five.deaths, Life.expectancy)) + geom_jitter(color = "pink", alpha = 0.5) + theme_grey()
+
+p <- plot_grid(life_expectancy_vs_under_five_deaths)
+title <- ggdraw() + draw_label("Correlation between Under five deaths and life expectancy", fontface='bold')
+plot_grid(title, p, ncol=1, rel_heights=c(0.1, 1))
+```
+</br>
+
+<H5><b> 7. Life expectancy vs GDP </b></H5>
+**GDP ** Gross Domestic Product per capita (in USD)
+
+```{r life-exp vs GDP, echo=TRUE}
+#correlation between GDP and lif expectancy
+life_expectancy_vs_GDP  <- ggplot(life_expectancy_data, aes(GDP, Life.expectancy)) +
+                                      geom_jitter(color = "dark green", alpha = 0.5) + theme_light()
+
+p <- plot_grid(life_expectancy_vs_GDP) 
+title <- ggdraw() + draw_label("Correlation between GDP vs Life expectancy", fontface='bold')
+plot_grid(title, p, ncol=1, rel_heights=c(0.1, 1))
+```
+</br>
+
+<H5><b> 8. Life expectancy vs thinness  </b></H5>
+**thinness 1 to 19 years**
+Prevalence of thinness among children and adolescents for Age 10 to 19 (% )
+
+```{r life-exp vs thinness from 1-19 years, echo=TRUE}
+#correlation between thinness and life expectancy
+life_expectancy_vs_thinness_1_19_years  <- ggplot(life_expectancy_data, aes(thinness..1.19.years, Life.expectancy)) +
+                                      geom_jitter(color = "blue", alpha = 0.5) + theme_light()
+
+life_expectancy_vs_thinness_5_9_years  <- ggplot(life_expectancy_data, aes(thinness.5.9.years, Life.expectancy)) +
+                                      geom_jitter(color = "orange", alpha = 0.5) + theme_light()
+                                                  
+p <- plot_grid(life_expectancy_vs_thinness_1_19_years, life_expectancy_vs_thinness_5_9_years) 
+title <- ggdraw() + draw_label("Correlation between Thinness vs Life expectancy", fontface='bold')
+plot_grid(title, p, ncol=1, rel_heights=c(0.1, 1))
+```
+</br>
+
+<H5><b> 9. Life expectancy vs Income composition of resources</b></H5>
+**Income composition of resources** Human Development Index in terms of income composition of resources (index ranging from 0 to 1)
+
+```{r life-exp vs human development, echo=TRUE}
+library(plotly)
+life_expectancy_vs_Income_composition_of_resources <- plot_ly(data = life_expectancy_data, x = ~Income.composition.of.resources , y = ~Life.expectancy,
+                                      marker = list(size = 10,
+                                                      color = 'rgba(181, 201, 253, .9)',
+                                                  line = list(color = 'rgba(255, 0, 38, 0.2)',
+                                                              width = 2)))
+life_expectancy_vs_Income_composition_of_resources  <- life_expectancy_vs_Income_composition_of_resources %>% layout(title = 'Scatter Plot: Life Expectancy vs Income composition of resources',
+                                                                    yaxis = list(zeroline = FALSE),
+                                                                    xaxis = list(zeroline = FALSE))
+
+life_expectancy_vs_Income_composition_of_resources
+```
+We can see Human development positively influences Life expectancy.
+</br>
+
+### Correlation and Variances
+We will use **ggcorr** function to check the correlation between independent numerical variables and the dependent variable.
+
+```{r corrvar, echo=FALSE}
+ggcorr(life_expectancy_data, 
+       label = T, 
+       label_size = 2,
+       label_round = 2,
+       hjust = 1,
+       size = 3, 
+       color = "royalblue",
+       layout.exp = 5,
+       low = "#5DA9E9", 
+       mid = "white", 
+       high = "#9A031E",
+       name = "Correlation")
+```
+
+We observe that the <span style="color: blue;">`Life.Expectancy`</span> variable has a strong positive correlation with <span style="color: blue;">`schooling`</span> and <span style="color: blue;">`Income.composition.of.resources`</span>. On the other hand, <span style="color: blue;">`Adult.Mortality`</span> has a strong negative correlation with <span style="color: blue;">`Life.Expectancy`</span> and is a valid finding since when the Adult mortality is high, the life expectancy will definitely be low.
+
+## Preparing Data for modeling
+
+```{r splitting the dataset, echo=TRUE}
+#we will split the data into train and test for model building
+n_train <- round(0.8 * nrow(life_expectancy_data))
+train_indices <- sample(1:nrow(life_expectancy_data), n_train)
+train_data <- life_expectancy_data[train_indices, ]
+test_data <- life_expectancy_data[-train_indices, ]
+```
+
+### Regression analysis
+Now that we have seen correlation showing the relationship of Life Expectancy with each independent variables. Let's analyse the data set using Multiple linear regression.
+
+The aim of linear regression is to model a continuous variable Y as a mathematical function of one or more X variable(s), so that we can use this regression model to predict the Y when only the X is known. 
+
+Let’s build our initial Linear regression model.
+
+*Outcome:* life.expectancy (reasons for high or low life expectancy?)
+*Predictors:* Alcohol, percentage.expenditure, Hepatitis.B, Measles,  BMI, under.five.deaths, Polio, GDP, Total.expenditure, Diphtheria, thinness..1.19.years,  thinness.5.9.years, Income.composition.of.resources
+
+```{r formula1, echo=TRUE}
+#first model
+formula1 <- as.formula("Life.expectancy ~ Alcohol + percentage.expenditure + Hepatitis.B + Measles +  BMI + under.five.deaths + Polio+ Total.expenditure + Diphtheria  + thinness..1.19.years + thinness.5.9.years + GDP + Income.composition.of.resources")
+model1 <- lm(formula1, data = train_data)
+summary(model1)
+
+r_sq1 <- summary(model1)$r.squared
+prediction1 <- predict(model1, newdata = test_data)
+residuals1 <- test_data$Life.expectancy - prediction1
+rmse1 <- sqrt(mean(residuals1^2, na.rm=TRUE))
+```
+
+The first step in interpreting the regression is to examine the F-statistic and the associated p-value, at the bottom of model summary.
+
+In our example, it can be seen that p-value of the F-statistic is < 2.2e-16, which is highly significant. This means that, at least, one of the predictor variables is significantly related to the outcome variable.
+
+To see which predictor variables are significant, you can examine the coefficients table, which shows the estimate of regression beta coefficients and the associated t-statitic p-values:
+
+This is very interesting to see the effect of all other variables - Alcohol, Immunizations (Polio, Diptheria), BMI and Human development have a statistically significant effect on the outcome of Life expectancy.
+
+```{r summary of model coefficients, echo=TRUE}
+summary(model1)$coefficient
+```
+
+For a given the predictor, the t-statistic evaluates whether or not there is significant association between the predictor and the outcome variable, that is whether the beta coefficient of the predictor is significantly different from zero.
+
+It can be seen that, change in the Alcohol,BMI,Polio, Total expenditure,Diphtheria, Thinness 1- 19 years,Income composition of resources are significantly associated to life expectancy of a person.
+
+For a given predictor variable, the coefficient (b) can be interpreted as the average effect on y of a one unit increase in predictor, holding all other predictors fixed.
+
+We found that Measles, percentage expenditure, Hepatitis B, under five deaths variables are not significant in the multiple regression model. We can remove these variables from our analysis.
+
+```{r formula2, echo=TRUE}
+#second model
+#dropping insignificant variables like measles, percentage.expenditure, Hepatitis.B, Under.five.deaths, Thinness.5.9.years
+formula2 <- as.formula("Life.expectancy ~  Alcohol +  Diphtheria  +  BMI +  Polio + Total.expenditure + thinness..1.19.years +  Income.composition.of.resources")
+model2 <- lm(formula2, data = train_data)
+summary(model2)
+
+r_sq2 <- summary(model2)$r.squared
+prediction2 <- predict(model2, newdata = test_data)
+residuals2 <- test_data$Life.expectancy - prediction2
+rmse2 <- sqrt(mean(residuals2^2, na.rm=TRUE))
+```
+
+### Comparing the models
+```{r echo=TRUE}
+print(paste0("R-squared for first model:", round(r_sq1, 4)))
+print(paste0("R-squared for second model: ", round(r_sq2, 4)))
+
+print(paste0("RMSE for first model: ", round(rmse1, 2)))
+print(paste0("RMSE for second model: ", round(rmse2, 2)))
+```
+
+The confidence interval of the model coefficient can be extracted as follow:
+
+```{r confident interval estimation, echo=TRUE}
+confint(model2, level=0.95)
+```
+
+## Prediction
+
+```{r echo=TRUE}
+#prediction
+test_data$prediction <- predict(model2, newdata = test_data)
+ggplot(test_data, aes(x = prediction, y = Life.expectancy)) + 
+  geom_point(color = "blue", alpha = 0.7) + 
+  geom_abline(color = "red") +
+  ggtitle("Prediction vs. Real values")
+
+```
+
+## Model evaluation / Validation
+
+Diagnostic Plots are used to evaluate the model assumptions and understand whether or not there are observations that can strongly have influence on the analysis. 
+</br>
+</br>
+Residuals are the measure of how far from the regression line the Data points are. Fitted values are models prediction of mean response value when you input the values of the predictors, factor levels or components into the model.</br>
+</br>
+We have plotted the following graphs:
+</br>
+1. Residuals Vs Fitted values graph
+2. Histogram of residuals
+
+```{r echo=TRUE}
+#residuals vs linear model prediction
+test_data$residuals <- test_data$Life.expectancy - test_data$prediction
+ggplot(data = test_data, aes(x = prediction, y = residuals)) +
+  geom_pointrange(aes(ymin = 0, ymax = residuals), color = "purple", alpha = 0.7) + geom_hline(yintercept = 0, linetype = 4, color = "red") +
+  ggtitle("Residuals vs. Linear model prediction")
+
+```
+
+```{r echo=TRUE}
+#histogram for residuals
+ggplot(test_data, aes(x = residuals)) + 
+  geom_histogram(bins = 15, fill = "light blue") +
+  ggtitle("Histogram of residuals")
+
+```
+
+**Residual**: It is an error between a predicted value and the observed actual value.
+</br>
+</br>
+**Assumptions for a Residual Plot:**
+1. The most important assumption of a linear regression model is that errors are independent and normally distributed.
+2. It has high quality of points close to the origin and low density of points away from the origin.
+3. It is symmetric about the origin.
+</br>
+</br>
+To validate the regression model, you must use redual plot to visually confirm the validity of your model.
+
+### GainCurvePlot
+The use case for this visualization is to compare a predictive model score to an actual outcome (either binary (0/1) or continuous). In this case the gain curve plot measures how well the model score sorts the data compared to the true outcome value.
+
+```{r echo=TRUE}
+GainCurvePlot(test_data, "prediction", "Life.expectancy", "Model2")
+```
+</br>
+</br>
+Finally our model can be written as follow:
+
+<n>Life_Expectancy =  45.342414 + 0.051514 x Alcohol + 0.037775 x Diphtheria + 0.094218 x BMI + 0.053829 x Polio +  0.020896 x Total.expenditure  +  -0.174295 x Thinness..1.19.years + 21.336983 x Income.composition.of.resources</n>
+</br>
+</br>
+
+## Model accuracy assessment
+As we have seen in our Linear regression model, the overall quality of the model can be assessed by examining the R-squared (R2) and Residual Standard Error (RSE).
+</br>
+
+<b>R-squared:</b>
+</br> 
+In multiple linear regression, the R2 represents the correlation coefficient between the observed values of the outcome variable (y) and the fitted (i.e., predicted) values of y. For this reason, the value of R will always be positive and will range from zero to one.
+
+R2 represents the proportion of variance, in the outcome variable y, that may be predicted by knowing the value of the x variables. An R2 value close to 1 indicates that the model explains a large portion of the variance in the outcome variable.
+
+A problem with the R2, is that, it will always increase when more variables are added to the model, even if those variables are only weakly associated with the response (James et al. 2014). A solution is to adjust the R2 by taking into account the number of predictor variables.
+
+The adjustment in the “Adjusted R Square” value in the summary output is a correction for the number of x variables included in the prediction model.
+</br>
+
+<b>Residual Standard Error (RSE), or sigma:</b></br>
+The RSE estimate gives a measure of error of prediction. The lower the RSE, the more accurate the model (on the data in hand).
+The error rate can be estimated by dividing the RSE by the mean outcome variable:
+
+```{r cars21, echo=TRUE}
+sigma(model2)/mean(life_expectancy_data$Life.expectancy)
+```
+</br>
+In our regression example, the RSE is 5.860291 corresponding to 8.4% error rate which is pretty good.
+
+## Testing the final Model
+We can test our model by giving the input values for the model to predict the approx. life expectancy of a person. 
+```{r echo=TRUE}
+#test1
+XYZ <- data.frame(  Country = "India",
+                     Alcohol = 5.28,
+                     Diphtheria = 86,
+                     BMI = 38.9,
+                     Polio = 98,
+                     Total.expenditure = 11.14,
+                     thinness..1.19.years = 2.1,
+                     Income.composition.of.resources = 0.741)
+print(paste0("Life expectancy for XYZ: ", round(predict(model2, XYZ), 2)))
+```
+
+
+## Conclusion
+
+It is deduced from the above observations that, there is a high chance of increased Life expectancy by being immunized.  We were successfully able to meet the objective and figure out variables that play important role in Life expectancy prediction model, that can be used in companies and as well as by customers. Data set with more features will provide more accurate outputs.
+</div>
+
+</body>
